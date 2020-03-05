@@ -246,6 +246,17 @@ pub trait GuestMemoryRegion: Bytes<MemoryRegionAddress, E = Error> {
     unsafe fn as_mut_slice(&self) -> Option<&mut [u8]> {
         None
     }
+
+    /// Returns a [`VolatileSlice`](struct.VolatileSlice.html) of `count` bytes starting at
+    /// `offset`.
+    fn get_slice(
+        &self,
+        offset: usize,
+        count: usize,
+    ) -> volatile_memory::Result<volatile_memory::VolatileSlice>;
+
+    /// Gets a slice of memory for the entire region that supports volatile access.
+    fn as_volatile_slice(&self) -> volatile_memory::VolatileSlice;
 }
 
 /// GuestAddressSpace provides a way to retrieve a GuestMemory object.
