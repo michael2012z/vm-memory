@@ -1,3 +1,5 @@
+build = "build.rs"
+
 [package]
 name = "vm-memory"
 version = "0.1.0"
@@ -25,3 +27,6 @@ features = ["errhandlingapi"]
 [dev-dependencies]
 matches = ">=0"
 vmm-sys-util = ">= 0.4.0"
+
+[build-dependencies.mml]
+version = "0.1"
