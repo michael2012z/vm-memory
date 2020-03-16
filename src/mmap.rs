@@ -165,6 +165,7 @@ impl Bytes<MemoryRegionAddress> for GuestRegionMmap {
     fn write(&self, buf: &[u8], addr: MemoryRegionAddress) -> guest_memory::Result<usize> {
         let maddr = addr.raw_value() as usize;
         self.as_volatile_slice()
+            .unwrap()
             .write(buf, maddr)
             .map_err(Into::into)
     }
@@ -183,6 +184,7 @@ impl Bytes<MemoryRegionAddress> for GuestRegionMmap {
     fn read(&self, buf: &mut [u8], addr: MemoryRegionAddress) -> guest_memory::Result<usize> {
         let maddr = addr.raw_value() as usize;
         self.as_volatile_slice()
+            .unwrap()
             .read(buf, maddr)
             .map_err(Into::into)
     }
@@ -190,6 +192,7 @@ impl Bytes<MemoryRegionAddress> for GuestRegionMmap {
     fn write_slice(&self, buf: &[u8], addr: MemoryRegionAddress) -> guest_memory::Result<()> {
         let maddr = addr.raw_value() as usize;
         self.as_volatile_slice()
+            .unwrap()
             .write_slice(buf, maddr)
             .map_err(Into::into)
     }
@@ -197,6 +200,7 @@ impl Bytes<MemoryRegionAddress> for GuestRegionMmap {
     fn read_slice(&self, buf: &mut [u8], addr: MemoryRegionAddress) -> guest_memory::Result<()> {
         let maddr = addr.raw_value() as usize;
         self.as_volatile_slice()
+            .unwrap()
             .read_slice(buf, maddr)
             .map_err(Into::into)
     }
@@ -232,6 +236,7 @@ impl Bytes<MemoryRegionAddress> for GuestRegionMmap {
     {
         let maddr = addr.raw_value() as usize;
         self.as_volatile_slice()
+            .unwrap()
             .read_from::<F>(maddr, src, count)
             .map_err(Into::into)
     }
@@ -267,6 +272,7 @@ impl Bytes<MemoryRegionAddress> for GuestRegionMmap {
     {
         let maddr = addr.raw_value() as usize;
         self.as_volatile_slice()
+            .unwrap()
             .read_exact_from::<F>(maddr, src, count)
             .map_err(Into::into)
     }
@@ -299,6 +305,7 @@ impl Bytes<MemoryRegionAddress> for GuestRegionMmap {
     {
         let maddr = addr.raw_value() as usize;
         self.as_volatile_slice()
+            .unwrap()
             .write_to::<F>(maddr, dst, count)
             .map_err(Into::into)
     }
@@ -331,6 +338,7 @@ impl Bytes<MemoryRegionAddress> for GuestRegionMmap {
     {
         let maddr = addr.raw_value() as usize;
         self.as_volatile_slice()
+            .unwrap()
             .write_all_to::<F>(maddr, dst, count)
             .map_err(Into::into)
     }
@@ -981,7 +989,8 @@ mod tests {
             let slice = guest_mem
                 .find_region(GuestAddress(0))
                 .unwrap()
-                .as_volatile_slice();
+                .as_volatile_slice()
+                .unwrap();
 
             let buf = &mut [0, 0, 0, 0, 0];
             assert_eq!(slice.read(buf, 0).unwrap(), 5);
@@ -1343,9 +1352,16 @@ mod tests {
         let region =
             GuestRegionMmap::new(MmapRegion::new(region_size).unwrap(), region_addr).unwrap();
 
-        let slice = region.as_volatile_slice();
-
+        // Test slice length.
+        let slice = region.as_volatile_slice().unwrap();
         assert_eq!(slice.len(), region_size);
+
+        // Test slice data.
+        let v = 0x1234_5678u32;
+        let r = slice.get_ref::<u32>(0x200).unwrap();
+        r.store(v);
+        let r1 = slice.get_ref::<u32>(0x200).unwrap();
+        assert_eq!(r1.load(), v);
     }
 
     #[test]
